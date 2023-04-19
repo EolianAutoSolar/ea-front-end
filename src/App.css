@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  
+  /* background-color: #1f2937; */
 }
 
 .App-logo {
@@ -11,6 +13,18 @@
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-y: hidden; 
+  
+}
+
+.filler-leyendas{
+
+  height: 158px;
 }
 
 .App-header {
