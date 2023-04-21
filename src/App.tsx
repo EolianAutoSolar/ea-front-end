@@ -1,4 +1,4 @@
-import React ,{ useState }from 'react';
+import React ,{ useState, useEffect }from 'react';
 import logo from './logo.svg';
 import carga from './icons/Carga.png'
 import descarga from './icons/Descarga.png'
@@ -7,16 +7,18 @@ import heat from './icons/Heat.png'
 import Chart from "react-apexcharts";
 import Icono from './Components/Icono';
 
+import { socket } from './socket';
+
 import './App.css';
 import { appendFile } from 'fs';
 
 const App= () => {
 
-
+  const [isConnected, setIsConnected] = useState(socket.connected);
   const [cargaState,setcargaState]=useState(true)
   const [descargaState,setdescargaState]=useState(true)
   const [heatState,setheatState]=useState(true)
-
+  const [bms, setBms] = useState([0,0,0,0]);
   const [seriesState,setSeriesState]=useState({series: [30,40,50,60,70]})
  
   const [chartState,setchartState] =useState(
@@ -86,6 +88,44 @@ const App= () => {
 
 
   })
+
+  useEffect(() => {
+    function onConnect() {
+      console.log("connected to server");
+      setIsConnected(true);
+    }
+
+    function onDisconnect() {
+      console.log("disconnected from server");
+      setIsConnected(false);
+    }
+
+    socket.on('bms', (data) => {
+      console.log("Received data from bms");
+      setBms(data);
+      console.log(data);
+    })
+
+    socket.on('kelly_izq', (data) => {
+
+    })
+
+    socket.on('kelly_der', (data) => {
+      
+    })
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('bms');
+      socket.off('kelly_der');
+      socket.off('kelly_izq');
+    };
+  }, []);
+
   return (
     <div className="App">
       {/* <header className="App-header">
@@ -183,7 +223,7 @@ const App= () => {
                     }
                   }
                 }]}}
-              series={ chartState.series}
+              series={ bms }
               type="radialBar"
               width= "1220"
       
