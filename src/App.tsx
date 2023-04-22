@@ -17,10 +17,16 @@ const App= () => {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [cargaState,setcargaState]=useState(true)
   const [descargaState,setdescargaState]=useState(true)
-  const [heatState,setheatState]=useState(true)
-  const [bms, setBms] = useState([0,0,0,0]);
+  const [heatState,setheatState]=useState(true);
   const [seriesState,setSeriesState]=useState({series: [30,40,50,60,70]})
- 
+  
+  const [leftRpm, setLeftRpm] = useState(0);
+  const [rightRpm, setRightRpm] = useState(0);
+  const [leftVelocity, setLeftVelocity] = useState(0);
+  const [rightVelocity, setRightVelocity] = useState(0);
+  const [power, setPower] = useState(0);
+  const [soc, setSoc] = useState(0);
+
   const [chartState,setchartState] =useState(
     
     {
@@ -88,7 +94,7 @@ const App= () => {
 
 
   })
-
+  console.log(socket);
   useEffect(() => {
     function onConnect() {
       console.log("connected to server");
@@ -100,29 +106,37 @@ const App= () => {
       setIsConnected(false);
     }
 
-    socket.on('bms', (data) => {
-      console.log("Received data from bms");
-      setBms(data);
-      console.log(data);
+    socket.on('bms', (bms:any) => {
+      console.log("Received bms from bms");
+      setSoc(bms[41]); // bms[41] -> SOC
+      setPower(bms[36]*bms[31]); // bms[36] -> current, bms[31] -> pack voltage
+      console.log(bms);
     })
 
-    socket.on('kelly_izq', (data) => {
-
+    socket.on('kellyIzq', (kellyIzq: any) => {
+      console.log("Received data from kellyIzq");
+      setLeftRpm(kellyIzq[17]);
+      console.log(kellyIzq);
     })
 
-    socket.on('kelly_der', (data) => {
-      
+    socket.on('kellyDer', (kellyDer : any) => {
+      console.log("Received data from kellyDer");
+      setRightRpm(kellyDer[17]);
     })
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
+    socket.on("connect_error", (err: any) => {
+      console.log(`connect_error due to ${err.message}`);
+    });
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
       socket.off('bms');
-      socket.off('kelly_der');
-      socket.off('kelly_izq');
+      socket.off('kellyIzq');
+      socket.off('kellyDer');
+      socket.off('connect_error');
     };
   }, []);
 
@@ -193,7 +207,7 @@ const App= () => {
   
   
                 colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5'],
-                labels: ['Velocidad', 'Soc', 'Corriente del Banco', 'Voltaje del Banco'],
+                labels: ['RPM Izq', 'RPM Der', 'SOC', 'Potencia'],
                 legend: {
                   show: true,
                   floating: true,
@@ -206,7 +220,7 @@ const App= () => {
                   labels: {
                     useSeriesColors: true,
                   },
-                  
+                  // aca van las unidades de medida
                   formatter: function(seriesName: string, opts: { w: { globals: { series: { [x: string]: string; }; }; }; seriesIndex: string | number; }) {
                     return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex]
                   },
@@ -223,7 +237,7 @@ const App= () => {
                     }
                   }
                 }]}}
-              series={ bms }
+              series={ [leftRpm, rightRpm, soc, power] }
               type="radialBar"
               width= "1220"
       
