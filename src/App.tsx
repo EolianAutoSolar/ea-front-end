@@ -5,6 +5,7 @@ import './App.css';
 
 const App: React.FC = () => {
   const [seriesState, setSeriesState] = useState({ series: [30, 40, 50, 60, 70] });
+  const [legendSeries, setLegendSeries] = useState([30, 40, 50, 60, 70]);
 
   const [leftRpm, setLeftRpm] = useState(0);
   const [rightRpm, setRightRpm] = useState(0);
@@ -24,8 +25,8 @@ const App: React.FC = () => {
 
     socket.on('bms', (bms: any) => {
       console.log("Received bms from bms");
-      setSoc(Math.min(bms[41], 100)); 
-      setPower(Math.min(bms[36] * bms[31], 100)); 
+      setSoc(Math.min(bms[41], 100));
+      setPower(Math.min(bms[36] * bms[31], 100));
       console.log(bms);
     });
 
@@ -46,6 +47,13 @@ const App: React.FC = () => {
       console.log(`connect_error due to ${err.message}`);
     });
 
+    // this is for testing
+    const intervalId = setInterval(() => {
+      const newValues = new Array(5).fill(0).map(() => Math.random() * 200);
+      setSeriesState({series: newValues.map(val => Math.min(val, 100))});
+      setLegendSeries(newValues);
+    }, 5000);
+
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
@@ -53,6 +61,9 @@ const App: React.FC = () => {
       socket.off('kellyIzq');
       socket.off('kellyDer');
       socket.off('connect_error');
+      // this is for testing
+      clearInterval(intervalId);
+
     };
   }, []);
 
@@ -99,9 +110,10 @@ const App: React.FC = () => {
                 labels: {
                   useSeriesColors: true,
                 },
-                formatter: function (seriesName: string, opts: { w: { globals: { series: { [x: string]: string; }; }; }; seriesIndex: string | number; }) {
-                  return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex]
-                },
+                formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
+                  let index = Number(opts.seriesIndex);
+                  return seriesName + ":  " + legendSeries[index];
+              },
                 itemMargin: {
                   vertical: 7,
                   horizontal: -10
@@ -169,9 +181,10 @@ const App: React.FC = () => {
                   height: 5,
                   radius: 10
                 },
-                formatter: function (seriesName: string, opts: { w: { globals: { series: { [x: string]: string; }; }; }; seriesIndex: string | number; }) {
-                  return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex]
-                },
+                formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
+                  let index = Number(opts.seriesIndex);
+                  return seriesName + ":  " + legendSeries[index];
+              },
                 itemMargin: {
                   vertical: -1,
                   horizontal: -10
@@ -234,9 +247,10 @@ const App: React.FC = () => {
                   height: 5,
                   radius: 10
                 },
-                formatter: function (seriesName: string, opts: { w: { globals: { series: { [x: string]: string; }; }; }; seriesIndex: string | number; }) {
-                  return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex]
-                },
+                formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
+                  let index = Number(opts.seriesIndex);
+                  return seriesName + ":  " + legendSeries[index];
+              },
                 itemMargin: {
                   vertical: -1,
                   horizontal: -10
