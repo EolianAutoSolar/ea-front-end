@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Chart from "react-apexcharts";
+import BarSOC from "./Components/SOCviewComponent";
 import { socket } from './socket';
 import './App.css';
 
@@ -10,7 +11,7 @@ const App: React.FC = () => {
   const [leftRpm, setLeftRpm] = useState(0);
   const [rightRpm, setRightRpm] = useState(0);
   const [power, setPower] = useState(0);
-  const [soc, setSoc] = useState(0);
+  const [soc, setSoc] = useState(30);
 
   console.log(socket);
 
@@ -270,6 +271,7 @@ const App: React.FC = () => {
             width="600"
           />
         </div>
+        <BarSOC soc={soc}/> 
       </div>
     </div>
   );
