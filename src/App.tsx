@@ -5,8 +5,8 @@ import { socket } from './socket';
 import './App.css';
 
 const App: React.FC = () => {
-  const [seriesState, setSeriesState] = useState({ series: [30, 40, 50, 60, 70] });
-  const [legendSeries, setLegendSeries] = useState([30, 40, 50, 60, 70]);
+  const [seriesState, setSeriesState] = useState({ series: [30, 15, 50, 60, 70] });
+  const [legendSeries, setLegendSeries] = useState([30, 15, 50, 60, 70]);
 
   const [leftRpm, setLeftRpm] = useState(0);
   const [rightRpm, setRightRpm] = useState(0);
@@ -52,7 +52,9 @@ const App: React.FC = () => {
     const intervalId = setInterval(() => {
       const newValues = new Array(5).fill(0).map(() => Math.random() * 200);
       setSeriesState({series: newValues.map(val => Math.min(val, 100))});
-      setLegendSeries(newValues);
+      setLegendSeries(newValues.map(val => val.toFixed(2) as any));
+      console.log(newValues)
+      setSoc((Math.random() * 100).toFixed(2) as any);
     }, 5000);
 
     return () => {
@@ -164,7 +166,26 @@ const App: React.FC = () => {
                   }
                 }
               },
-              colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5', '#990000'],
+              colors: ['#1ab7ea', 
+              function (valueStatus: any) {
+                const value = valueStatus.value;
+                if (value < 30)
+                  return '#0084ff'
+                else {
+                  const g = Math.floor(255 - (value - 30) * 255 / 70);
+                  return `rgb(255, ${g}, 0)`;
+                }
+              }
+              ,
+              function (valueStatus: any) {
+                const value = valueStatus.value;
+                if (value < 30)
+                  return '#39539E'
+                else {
+                  const g = Math.floor(255 - (value - 30) * 255 / 70);
+                  return `rgb(255, ${g}, 0)`;
+                }
+              }, '#0077B5', '#990000'],
               labels: ['RPM', 'Temperatura del motor', 'Temperatura del inversor', 'Throttle', 'Reverse'],
               legend: {
                 show: true,
@@ -230,7 +251,26 @@ const App: React.FC = () => {
                   }
                 }
               },
-              colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5', '#990000'],
+              colors: ['#1ab7ea',
+              function (valueStatus: any) {
+                const value = valueStatus.value;
+                if (value < 30)
+                  return '#0084ff'
+                else {
+                  const g = Math.floor(255 - (value - 30) * 255 / 70);
+                  return `rgb(255, ${g}, 0)`;
+                }
+              }
+              , 
+              function (valueStatus: any) {
+                const value = valueStatus.value;
+                if (value < 30)
+                  return '#39539E'
+                else {
+                  const g = Math.floor(255 - (value - 30) * 255 / 70);
+                  return `rgb(255, ${g}, 0)`;
+                }
+              }, '#0077B5', '#990000'],
               labels: ['RPM', 'Temperatura del motor', 'Temperatura del inversor', 'Throttle', 'Reverse'],
               legend: {
                 show: true,
