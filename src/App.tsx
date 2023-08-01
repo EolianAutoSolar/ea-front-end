@@ -5,55 +5,82 @@ import { socket } from './socket';
 import './App.css';
 
 const App: React.FC = () => {
-  const [seriesState, setSeriesState] = useState({ series: [30, 40, 50, 60, 70] });
-  const [legendSeries, setLegendSeries] = useState([30, 40, 50, 60, 70]);
+  const [isConnected, setIsConnected] = useState(socket.connected);
+  
+  const [averageTemperature, setAverageTemperature] = useState(0);
+  const [maximumTemperature, setMaximumTemperature] = useState(0);
+  const [minimumTemperature, setMinimumTemperature] = useState(0);
+  const [kellyIzqTemperature, setKellyIzqTemperature] = useState(0);
+  const [kellyDerTemperature, setKellyDerTemperature] = useState(0);
 
-  const [leftRpm, setLeftRpm] = useState(0);
-  const [rightRpm, setRightRpm] = useState(0);
   const [power, setPower] = useState(0);
-  const [soc, setSoc] = useState(30);
+  const [chartPower, setChartPower] = useState(chartValue(power, 8000));
+  const [soc, setSoc] = useState(71);
+  const [velocity, setVelocity] = useState(0);
+  const [chartVelocity, setChartVelocity] = useState(chartValue(velocity, 100));
+  const units = ["Km/h", "%"];
 
   console.log(socket);
+
+  function chartValue(value : number, maximum : number) {
+    return Number((value/maximum).toFixed(2)) * 100;
+  }
+
+  function rpmToKmh(rpm : number) {
+    let localVelocity = 2*3.6*Math.PI*0.3*rpm/60;
+    return Number(localVelocity.toFixed(1));
+  }
+
+  useEffect(() => {
+    console.log("updated velocity ", velocity);
+    setChartVelocity(chartValue(velocity, 100));
+  }, [velocity])
+
+  useEffect(() => {
+    console.log("updated power ", power);
+    setChartPower(chartValue(power, 8000));
+  }, [power])
 
   useEffect(() => {
     function onConnect() {
       console.log("connected to server");
+      setIsConnected(true);
     }
 
     function onDisconnect() {
       console.log("disconnected from server");
+      setIsConnected(false);
     }
 
-    socket.on('bms', (bms: any) => {
+    socket.on('bms', (bms:any) => {
       console.log("Received bms from bms");
-      setSoc(Math.min(bms[41], 100));
-      setPower(Math.min(bms[36] * bms[31], 100));
+      setSoc(bms[41]); // bms[41] -> SOC
+      setPower(bms[36]*bms[31]); // bms[36] -> current, bms[31] -> pack voltage
       console.log(bms);
-    });
+      setAverageTemperature(bms[45]);
+      setMinimumTemperature(bms[46]);
+      setMaximumTemperature(bms[48]);
+    })
 
-    socket.on('kellyIzq', (kellyIzq: any) => {
-      console.log("Received data from kellyIzq");
-      setLeftRpm(Math.min(kellyIzq[17], 100));
-      console.log(kellyIzq);
-    });
+    socket.on('kellyIzq', (data: any) => {
+      console.log("Received data from kelly_izq");
+      console.log(data);
+      // setVelocity(Math.max(rpmToKmh(data[6]), velocity));
+      setKellyIzqTemperature(data[11]);
+    })
 
-    socket.on('kellyDer', (kellyDer: any) => {
-      console.log("Received data from kellyDer");
-      setRightRpm(Math.min(kellyDer[17], 100));
-    });
+    socket.on('kellyDer', (data : any) => {
+      console.log("Received data from kelly_der");
+      console.log(data);
+      setVelocity(rpmToKmh(data[6]));
+      setKellyDerTemperature(data[11]);
+    })
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on("connect_error", (err: any) => {
       console.log(`connect_error due to ${err.message}`);
     });
-
-    // this is for testing
-    const intervalId = setInterval(() => {
-      const newValues = new Array(5).fill(0).map(() => Math.random() * 200);
-      setSeriesState({series: newValues.map(val => Math.min(val, 100))});
-      setLegendSeries(newValues);
-    }, 5000);
 
     return () => {
       socket.off('connect', onConnect);
@@ -62,215 +89,93 @@ const App: React.FC = () => {
       socket.off('kellyIzq');
       socket.off('kellyDer');
       socket.off('connect_error');
-      // this is for testing
-      clearInterval(intervalId);
-
     };
   }, []);
 
+  function changeValues() {
+    setSoc(Number(Math.random().toFixed(2))*100);
+    setPower(Number(Math.random().toFixed(3))*8000);
+    setVelocity(Number(Math.random().toFixed(2))*100);
+  }
+
   return (
     <div className="App">
-      <div className={`row`}>
-        <div className="col-4 mb-1 mr-5"></div>
-        <div className="col-2 d-flex justify-content-center mt-2 ml-5">
-          <Chart
-            options={{
-              plotOptions: {
-                radialBar: {
-                  offsetY: -50,
-                  offsetX: 50,
-                  startAngle: -90,
-                  endAngle: 0,
-                  hollow: {
-                    margin: 0,
-                    size: '60%',
-                    background: 'transparent',
-                    image: undefined,
-                  },
-                  dataLabels: {
-                    name: {
-                      show: false,
+      <div className="temps">Temperaturas</div>
+      <div className="temps">BMS promedio: {averageTemperature} °C</div>
+      <div className="temps">BMS menor: {minimumTemperature} °C</div>
+      <div className="temps">BMS mayor: {maximumTemperature} °C</div>
+      <div className="temps">Kelly derecho: {kellyDerTemperature} °C</div>
+      <div className="temps">Kelly izquierdo: {kellyIzqTemperature} °C</div>
+      <div className="temps">Velocidad: {velocity}</div>
+      <h1 style={{
+        color: '#FF0000',
+      }}>Potencia:  {power} W</h1>
+      {/* /*<button onClick={changeValues}></button> */}
+      <Chart
+              options={ {
+                plotOptions: {
+                  radialBar: {
+                    offsetY: -50,
+                    offsetX: 50,
+                    startAngle: -90,
+                    endAngle: 90,
+                    hollow: {
+                      margin: 0,
+                      size: '60%',
+                      background: 'transparent',
+                      image: undefined,
                     },
-                    value: {
-                      show: false,
+                    track: {
+                      background: '#333333'
+                    },
+                    dataLabels: {
+                      name: {
+                        show: false,
+                      },
+                      value: {
+                        show: false,
+                      }
                     }
                   }
-                }
-              },
-              colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5'],
-              labels: ['RPM Izq', 'RPM Der', 'SOC', 'Potencia'],
-              legend: {
-                show: true,
-                floating: true,
-                fontSize: '20px',
-                position: 'left',
-                horizontalAlign: 'left',
-
-                offsetX: 650,//-370,
-                offsetY: -20,//-5,
-                labels: {
-                  useSeriesColors: true,
                 },
-                formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
-                  let index = Number(opts.seriesIndex);
-                  return seriesName + ":  " + legendSeries[index];
-              },
-                itemMargin: {
-                  vertical: 7,
-                  horizontal: -10
-                }
-              },
-              responsive: [{
-                breakpoint: 480,
-                options: {
-                  legend: {
-                    show: false
-                  }
-                }
-              }]
-            }}
-            series={[
-              Math.min(leftRpm, 100),
-              Math.min(rightRpm, 100),
-              Math.min(soc, 100),
-              Math.min(power, 100)
-            ]}
-            type="radialBar"
-            width="1220"
-          />
-        </div>
-        <div className="col-1 d-flex justify-content-center mt-2 ml-5">
-          <Chart
-            options={{
-              plotOptions: {
-                radialBar: {
-                  offsetY: 300,
-                  offsetX: -80,
-                  startAngle: -90,
-                  endAngle: 0,
-                  hollow: {
-                    margin: 0,
-                    size: '50%',
-                    background: 'transparent',
-                    image: undefined,
+  
+  
+                colors: ['#FFFF00', '#00FF00'],
+                labels: ['Velocidad', 'SOC'],
+                legend: {
+                  show: true,
+                  floating: true,
+                  fontSize: '30px',
+                  position: 'left',
+                  horizontalAlign: 'center', 
+                  
+                  offsetX: 480,//-370,
+                  offsetY: 270,//-5,
+                  labels: {
+                    useSeriesColors: true,
                   },
-                  dataLabels: {
-                    name: {
-                      show: false,
-                    },
-                    value: {
-                      show: false,
+                  // aca van las unidades de medida
+                  formatter: function(seriesName: string, opts: { w: { globals: { series: { [x: string]: string; }; }; }; seriesIndex:  number; }) {
+                    return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + " "+ units[opts.seriesIndex]
+                  },
+                  itemMargin: {
+                    vertical: 7,
+                    horizontal: -10
+                  }
+                },
+                responsive: [{
+                  breakpoint: 480,
+                  options: {
+                    legend: {
+                        show: false
                     }
                   }
-                }
-              },
-              colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5', '#990000'],
-              labels: ['RPM', 'Temperatura del motor', 'Temperatura del inversor', 'Throttle', 'Reverse'],
-              legend: {
-                show: true,
-                floating: true,
-                fontSize: '10px',
-                position: 'left',
-                horizontalAlign: 'left',
-                offsetX: 210,//-370,
-                offsetY: 305,//-5,
-                labels: {
-                  useSeriesColors: true,
-                },
-                markers: {
-                  width: 5,
-                  height: 5,
-                  radius: 10
-                },
-                formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
-                  let index = Number(opts.seriesIndex);
-                  return seriesName + ":  " + legendSeries[index];
-              },
-                itemMargin: {
-                  vertical: -1,
-                  horizontal: -10
-                }
-              },
-              responsive: [{
-                breakpoint: 480,
-                options: {
-                  legend: {
-                    show: false
-                  }
-                }
-              }]
-            }}
-            series={seriesState.series.map(val => Math.min(val, 100))}
-            type="radialBar"
-            width="600"
-          />
-        </div>
-        <div className="col-5 d-flex justify-content-center mt-2 ml-5">
-          <Chart
-            options={{
-              plotOptions: {
-                radialBar: {
-                  offsetY: 300,
-                  offsetX: 0,
-                  startAngle: -90,
-                  endAngle: 0,
-                  hollow: {
-                    margin: 0,
-                    size: '50%',
-                    background: 'transparent',
-                    image: undefined,
-                  },
-                  dataLabels: {
-                    name: {
-                      show: false,
-                    },
-                    value: {
-                      show: false,
-                    }
-                  }
-                }
-              },
-              colors: ['#1ab7ea', '#0084ff', '#39539E', '#0077B5', '#990000'],
-              labels: ['RPM', 'Temperatura del motor', 'Temperatura del inversor', 'Throttle', 'Reverse'],
-              legend: {
-                show: true,
-                floating: true,
-                fontSize: '10px',
-                position: 'left',
-                horizontalAlign: 'left',
-                offsetX: 290,//-370,
-                offsetY: 305,//-5,
-                labels: {
-                  useSeriesColors: true,
-                },
-                markers: {
-                  width: 5,
-                  height: 5,
-                  radius: 10
-                },
-                formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
-                  let index = Number(opts.seriesIndex);
-                  return seriesName + ":  " + legendSeries[index];
-              },
-                itemMargin: {
-                  vertical: -1,
-                  horizontal: -10
-                }
-              },
-              responsive: [{
-                breakpoint: 480,
-                options: {
-                  legend: {
-                    show: false
-                  }
-                }
-              }]
-            }}
-            series={seriesState.series.map(val => Math.min(val, 100))}
-            type="radialBar"
-            width="600"
-          />
-        </div>
+                }]}}
+              series={ [velocity, soc] }
+              type="radialBar"
+              width= "1220"
+      />
+      <div>
         <BarSOC soc={soc}/> 
       </div>
     </div>
