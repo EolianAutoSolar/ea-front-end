@@ -5,7 +5,6 @@ import { socket } from './socket';
 import './App.css';
 
 const App: React.FC = () => {
-  const [isConnected, setIsConnected] = useState(socket.connected);
   
   const [averageTemperature, setAverageTemperature] = useState(0);
   const [maximumTemperature, setMaximumTemperature] = useState(0);
@@ -14,7 +13,6 @@ const App: React.FC = () => {
   const [kellyDerTemperature, setKellyDerTemperature] = useState(0);
 
   const [power, setPower] = useState(0);
-  const [chartPower, setChartPower] = useState(chartValue(power, 8000));
   const [soc, setSoc] = useState(71);
   const [velocity, setVelocity] = useState(0);
   const [chartVelocity, setChartVelocity] = useState(chartValue(velocity, 100));
@@ -26,10 +24,10 @@ const App: React.FC = () => {
     return Number((value/maximum).toFixed(2)) * 100;
   }
 
-  function rpmToKmh(rpm : number) {
-    let localVelocity = 2*3.6*Math.PI*0.3*rpm/60;
-    return Number(localVelocity.toFixed(1));
-  }
+  // function rpmToKmh(rpm : number) {
+  //   let localVelocity = 2*3.6*Math.PI*0.3*rpm/60;
+  //   return Number(localVelocity.toFixed(1));
+  // }
 
   useEffect(() => {
     console.log("updated velocity ", velocity);
@@ -38,18 +36,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     console.log("updated power ", power);
-    setChartPower(chartValue(power, 8000));
   }, [power])
 
   useEffect(() => {
     function onConnect() {
       console.log("connected to server");
-      setIsConnected(true);
     }
 
     function onDisconnect() {
       console.log("disconnected from server");
-      setIsConnected(false);
     }
 
     socket.on('bms', (bms:any) => {
@@ -65,14 +60,14 @@ const App: React.FC = () => {
     socket.on('kellyIzq', (data: any) => {
       console.log("Received data from kelly_izq");
       console.log(data);
-      // setVelocity(Math.max(rpmToKmh(data[6]), velocity));
+      //setVelocity(Math.max(rpmToKmh(data[6]), velocity));
       setKellyIzqTemperature(data[11]);
     })
 
     socket.on('kellyDer', (data : any) => {
       console.log("Received data from kelly_der");
       console.log(data);
-      setVelocity(rpmToKmh(data[6]));
+      //setVelocity(Math.max(rpmToKmh(data[6]), velocity));
       setKellyDerTemperature(data[11]);
     })
 
@@ -106,11 +101,10 @@ const App: React.FC = () => {
       <div className="temps">BMS mayor: {maximumTemperature} °C</div>
       <div className="temps">Kelly derecho: {kellyDerTemperature} °C</div>
       <div className="temps">Kelly izquierdo: {kellyIzqTemperature} °C</div>
-      <div className="temps">Velocidad: {velocity}</div>
       <h1 style={{
         color: '#FF0000',
       }}>Potencia:  {power} W</h1>
-      {/* /*<button onClick={changeValues}></button> */}
+      <button onClick={changeValues}></button>
       <Chart
               options={ {
                 plotOptions: {
@@ -171,7 +165,7 @@ const App: React.FC = () => {
                     }
                   }
                 }]}}
-              series={ [velocity, soc] }
+              series={ [chartVelocity, soc] }
               type="radialBar"
               width= "1220"
       />
