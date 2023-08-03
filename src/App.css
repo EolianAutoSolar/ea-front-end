@@ -1,7 +1,6 @@
 .App {
   text-align: center;
-  
-  /* background-color: #1f2937; */
+  background-color: #141414;
 }
 
 .App-logo {
@@ -36,6 +35,10 @@ html, body {
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+}
+
+.temps {
+  color: white
 }
 
 .App-link {

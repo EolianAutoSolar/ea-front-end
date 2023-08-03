@@ -1,4 +1,4 @@
-import React, { useState} from "react";
+import React from "react";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from 'apexcharts';
 
@@ -97,7 +97,7 @@ const BarSOC: React.FC<Props> = props => {
     };
     return (
         <div className="SOC_barChart_container">
-            <img className="Battery_icon" src={batteryIcon}/>
+            <img alt="battery icon" className="Battery_icon" src={batteryIcon}/>
             <div className="chart_container">
                 <ReactApexChart className="Battery_graph" options={options} series={series} type="bar" height={180} width={1170}/>
             </div>
