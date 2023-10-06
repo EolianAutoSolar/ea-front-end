@@ -1,9 +1,103 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FC } from 'react';
 import Chart from "react-apexcharts";
 import BarSOC from "./Components/SOCviewComponent";
 import { socket } from './socket';
 import './App.css';
 
+type MainChartProps = {
+  legendSeries: number[];
+  seriesState: {[series: string]:number[]};
+};
+const MainChart: FC<MainChartProps> = ({ legendSeries, seriesState}) =>{
+  return (
+    <Chart
+    options={{
+      plotOptions: {
+        radialBar: {
+          offsetY: 50,
+          offsetX: 50,
+          startAngle: -90,
+          endAngle: 90,
+          hollow: {
+            margin: 0,
+            size: '60%',
+            background: 'transparent',
+            image: undefined,
+          },
+          track: {
+            background: '#222222'
+          },
+          dataLabels: {
+            name: {
+              show: false,
+            },
+            value: {
+              show: false,
+            }
+          }
+        }
+      },
+      colors: ['#1ab7ea', 
+      function (valueStatus: any) {
+        const value = valueStatus.value;
+        if (value < 30)
+          return '#0084ff'
+        else {
+          const g = Math.floor(255 - (value - 30) * 255 / 70);
+          return `rgb(255, ${g}, 0)`;
+        }
+      }
+      ,
+      function (valueStatus: any) {
+        const value = valueStatus.value;
+        if (value < 30)
+          return '#39539E'
+        else {
+          const g = Math.floor(255 - (value - 30) * 255 / 70);
+          return `rgb(255, ${g}, 0)`;
+        }
+      }, '#0077B5', '#990000'],
+      labels: ['RPM', 'Temperatura del motor', 'Temperatura del inversor', 'Throttle', 'Reverse'],
+      legend: {
+        show: true,
+        floating: true,
+        fontSize: '30px',
+        position: 'left',
+        horizontalAlign: 'center',
+        offsetX: 420,//-370,
+        offsetY: 270,//-5,
+        labels: {
+          useSeriesColors: true,
+        },
+        markers: {
+          width: 5,
+          height: 5,
+          radius: 10
+        },
+        formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
+          let index = Number(opts.seriesIndex);
+          return seriesName + ":  " + legendSeries[index];
+      },
+        itemMargin: {
+          vertical: 7,
+          horizontal: -10
+        }
+      },
+      responsive: [{
+        breakpoint: 480,
+        options: {
+          legend: {
+            show: false
+          }
+        }
+      }]
+    }}
+    series={seriesState.series.map(val => Math.min(val, 100))}
+    type="radialBar"
+    width="1220"
+  />
+  );
+}
 const App: React.FC = () => {
   const [averageTemperature, setAverageTemperature] = useState(0);
   const [maximumTemperature, setMaximumTemperature] = useState(0);
@@ -83,106 +177,31 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <div className={`row`}>
-        <div className="col-4 mb-1 mr-5"></div>
-        <div className="col-1 d-flex justify-content-center mt-2 ml-5">
-        <div className="temps">Temperaturas</div>
-          <div className="temps">BMS promedio: {averageTemperature} °C</div>
-          <div className="temps">BMS menor: {minimumTemperature} °C</div>
-          <div className="temps">BMS mayor: {maximumTemperature} °C</div>
-          <div className="temps">Kelly derecho: {kellyDerTemperature} °C</div>
-          <div className="temps">Kelly izquierdo: {kellyIzqTemperature} °C</div>
+      <div style={{display:'flex', flexDirection:'column' ,justifyContent:'center'}}>
+        <div className='row' >
+          <div style={{display:'flex', justifyContent:'center'}}>
+              <div className="temps" style={{paddingLeft:'1em'}}>Temperaturas</div>
+              <div className="temps" style={{paddingLeft:'1em'}}>BMS promedio: {averageTemperature} °C</div>
+              <div className="temps" style={{paddingLeft:'1em'}}>BMS menor: {minimumTemperature} °C</div>
+              <div className="temps" style={{paddingLeft:'1em'}}>BMS mayor: {maximumTemperature} °C</div>
+              <div className="temps" style={{paddingLeft:'1em'}}>Kelly derecho: {kellyDerTemperature} °C</div>
+              <div className="temps" style={{paddingLeft:'1em'}}>Kelly izquierdo: {kellyIzqTemperature} °C</div>
+          </div>
+
         </div>
-        <div className="col-1 d-flex justify-content-center mt-2 ml-5">
-          <Chart
-            options={{
-              plotOptions: {
-                radialBar: {
-                  offsetY: 50,
-                  offsetX: 50,
-                  startAngle: -90,
-                  endAngle: 90,
-                  hollow: {
-                    margin: 0,
-                    size: '60%',
-                    background: 'transparent',
-                    image: undefined,
-                  },
-                  track: {
-                    background: '#222222'
-                  },
-                  dataLabels: {
-                    name: {
-                      show: false,
-                    },
-                    value: {
-                      show: false,
-                    }
-                  }
-                }
-              },
-              colors: ['#1ab7ea', 
-              function (valueStatus: any) {
-                const value = valueStatus.value;
-                if (value < 30)
-                  return '#0084ff'
-                else {
-                  const g = Math.floor(255 - (value - 30) * 255 / 70);
-                  return `rgb(255, ${g}, 0)`;
-                }
-              }
-              ,
-              function (valueStatus: any) {
-                const value = valueStatus.value;
-                if (value < 30)
-                  return '#39539E'
-                else {
-                  const g = Math.floor(255 - (value - 30) * 255 / 70);
-                  return `rgb(255, ${g}, 0)`;
-                }
-              }, '#0077B5', '#990000'],
-              labels: ['RPM', 'Temperatura del motor', 'Temperatura del inversor', 'Throttle', 'Reverse'],
-              legend: {
-                show: true,
-                floating: true,
-                fontSize: '30px',
-                position: 'left',
-                horizontalAlign: 'center',
-                offsetX: 420,//-370,
-                offsetY: 270,//-5,
-                labels: {
-                  useSeriesColors: true,
-                },
-                markers: {
-                  width: 5,
-                  height: 5,
-                  radius: 10
-                },
-                formatter: function (seriesName: string, opts: { seriesIndex: string | number; }) {
-                  let index = Number(opts.seriesIndex);
-                  return seriesName + ":  " + legendSeries[index];
-              },
-                itemMargin: {
-                  vertical: 7,
-                  horizontal: -10
-                }
-              },
-              responsive: [{
-                breakpoint: 480,
-                options: {
-                  legend: {
-                    show: false
-                  }
-                }
-              }]
-            }}
-            series={seriesState.series.map(val => Math.min(val, 100))}
-            type="radialBar"
-            width="1220"
-          />
+        <div className='row'>
+          <div style={{display:'flex', justifyContent:'center'}}>
+            <BarSOC soc={soc}/> 
+          </div>
         </div>
-        <BarSOC soc={soc}/> 
+        <div className='row' style={{position:'relative', top:-85}}>
+          <div style={{display:'flex', justifyContent:'center'}}>
+          <MainChart legendSeries={legendSeries} seriesState={seriesState}/>
+          </div>
+        </div>
+
       </div>
+
     </div>
   );
 }

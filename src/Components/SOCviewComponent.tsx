@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useLayoutEffect, useRef, useState} from "react";
 import ReactApexChart from "react-apexcharts";
 import { ApexOptions } from 'apexcharts';
 
@@ -31,6 +31,18 @@ export interface Props {
 }
 
 const BarSOC: React.FC<Props> = props => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
+
+    useLayoutEffect(() => {
+        if(ref.current){
+        setWidth(ref.current.offsetWidth);
+        setHeight(ref.current.offsetHeight);
+    }
+    }, []);
+
     const series: ApexAxisChartSeries | ApexNonAxisChartSeries | undefined = [{ data: [props.soc] }];
     const options: ApexOptions | undefined = {
         chart: {
@@ -53,7 +65,7 @@ const BarSOC: React.FC<Props> = props => {
         colors: ["#00FF00"],
         dataLabels: {
             enabled: true,
-            offsetX: 520,
+            offsetX: (width!==null) ? Math.floor(width/2) :520,
             formatter: function(val, opts) {
                 return `${val} %`
             },
@@ -96,11 +108,13 @@ const BarSOC: React.FC<Props> = props => {
         }
     };
     return (
-        <div className="SOC_barChart_container">
-            <img className="Battery_icon" src={batteryIcon} alt="Battery icon"/>
-            <div className="chart_container">
-                <ReactApexChart className="Battery_graph" options={options} series={series} type="bar" height={180} width={1170}/>
+        <div style={{justifyContent:'center', display:'flex'}}>
+        <div ref = {ref} className="SOC_barChart_container">
+            <img className="Battery_icon" src={batteryIcon} alt="Battery icon" style={{width:'100%'}}/>
+            <div className="chart_container" style={{ maxWidth: 1240}}>
+                <ReactApexChart className="Battery_graph" options={options} series={series} height={125} type="bar"/>
             </div>
+        </div>
         </div>
 
     );

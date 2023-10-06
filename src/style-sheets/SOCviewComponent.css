@@ -1,21 +1,35 @@
 .SOC_barChart_container {
-    width: 1240px;
-    height: 115;
+    width: 800px;/*1240px;*/
+    height: 90px;
     display: flex;
     justify-content: center;
+    /**/
     /* height: 120px; */
 }
 
 .chart_container{
     position: absolute;
+    width: inherit;
 }
 
 .Battery_graph {
     position: absolute;
-    top: -35px;
-    left: -610px;
+    top: -24px;
+    width: inherit;
+    max-width: 1240px;
+    height: inherit;
+    left: -10px;
+    /*
+    height: inherit;
+    min-height: 0px;
+    max-height: 171.4px;*/
+   /* left: -610px;*/
 }
 
 .Battery_icon {
     z-index: 100;
+    width: 100%;
+
+/*    height: inherit;*/
+    max-width: 1240px;
 }
